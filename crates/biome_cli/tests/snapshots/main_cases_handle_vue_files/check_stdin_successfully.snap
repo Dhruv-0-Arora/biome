@@ -129,3 +129,19 @@ file.vue:3:25 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━�
   
 
 ```
+
+```block
+file.vue format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    1 1 │   <script setup lang="ts">
+    2   │ - import·{······Button··as·Button··}···from··"./components/Button.vue"···;
+    3   │ - import·*·····as·········vueUse··from··"vue-use"···;
+      2 │ + import·{·Button·as·Button·}·from·"./components/Button.vue";
+      3 │ + import·*·as·vueUse·from·"vue-use";
+    4 4 │   
+    5 5 │   delete a.c;
+  
+
+```

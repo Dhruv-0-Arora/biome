@@ -200,3 +200,22 @@ file.svelte:6:5 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━�
   
 
 ```
+
+```block
+file.svelte format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    1 1 │   <script context="module" lang="ts">
+    2   │ - import·{·Form·as···Form·}·····from·'./components/Form.svelte'·;
+    3   │ - import·····Button·····from·"./components/Button.svelte";
+      2 │ + import·{·Form·as·Form·}·from·"./components/Form.svelte";
+      3 │ + import·Button·from·"./components/Button.svelte";
+    4 4 │   debugger;
+    5   │ - statement·(·)·;
+      5 │ + statement();
+    6 6 │   var foo: string = "";
+    7 7 │   </script>
+  
+
+```

@@ -181,3 +181,22 @@ file.astro:6:5 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━�
   
 
 ```
+
+```block
+file.astro format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    1 1 │   ---
+    2   │ - import·{a·as·a}·from·'mod';
+    3   │ - import·{····something·}·from·"file.astro";
+      2 │ + import·{·a·as·a·}·from·"mod";
+      3 │ + import·{·something·}·from·"file.astro";
+    4 4 │   debugger;
+    5   │ - something·(·)·;
+      5 │ + something();
+    6 6 │   var foo: string = "";
+    7 7 │   ---
+  
+
+```

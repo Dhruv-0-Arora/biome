@@ -1,0 +1,44 @@
+---
+source: crates/biome_cli/tests/snap_test.rs
+expression: redactor(content)
+---
+## Command
+
+```shell
+biome check --stdin-file-path=example.ts
+```
+
+# Input messages
+
+```block
+export const value=1
+```
+
+# Termination Message
+
+```block
+stdin ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The contents aren't fixed. Use the `--write` flag to fix them.
+  
+
+
+```
+
+# Emitted Messages
+
+```block
+export const value=1
+```
+
+```block
+example.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    1   │ - export·const·value=1
+      1 │ + export·const·value·=·1;
+      2 │ + 
+  
+
+```

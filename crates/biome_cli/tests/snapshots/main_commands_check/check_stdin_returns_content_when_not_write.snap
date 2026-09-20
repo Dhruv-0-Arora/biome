@@ -69,3 +69,15 @@ mock.js:1:5 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━�
   
 
 ```
+
+```block
+mock.js format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    1   │ - let·b·=·2;
+      1 │ + let·b·=·2;
+      2 │ + 
+  
+
+```

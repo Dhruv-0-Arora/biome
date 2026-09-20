@@ -1,0 +1,73 @@
+---
+source: crates/biome_cli/tests/snap_test.rs
+expression: redactor(content)
+---
+## Command
+
+```shell
+biome check --stdin-file-path=src/example.ts
+```
+
+## `biome.json`
+
+```json
+{
+  "linter": {
+    "rules": {
+      "recommended": false,
+      "suspicious": { "noDebugger": "error" }
+    }
+  }
+}
+```
+
+# Input messages
+
+```block
+debugger;export const value=1
+```
+
+# Termination Message
+
+```block
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
+
+```
+
+# Emitted Messages
+
+```block
+debugger;export const value=1
+```
+
+```block
+src/example.ts:1:1 lint/suspicious/noDebugger  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × This is an unexpected use of the debugger statement.
+  
+  > 1 │ debugger;export const value=1
+      │ ^^^^^^^^^
+  
+  i Unsafe fix: Remove debugger statement
+  
+    1 │ debugger;export·const·value=1
+      │ ---------                    
+
+```
+
+```block
+src/example.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    1   │ - debugger;export·const·value=1
+      1 │ + debugger;
+      2 │ + export·const·value·=·1;
+      3 │ + 
+  
+
+```

@@ -1,9 +1,11 @@
+use crate::TestArgs as Args;
 use crate::configs::CONFIG_LINTER_DOWNGRADE_DIAGNOSTIC;
-use crate::run_cli;
-use crate::snap_test::{assert_file_contents, markup_to_string};
+use crate::snap_test::{
+    SnapshotPayload, assert_cli_snapshot, assert_file_contents, markup_to_string,
+};
+use crate::{run_cli, run_cli_with_dyn_fs};
 use biome_console::{BufferConsole, LogLevel, markup};
-use biome_fs::MemoryFileSystem;
-use bpaf::Args;
+use biome_fs::{MemoryFileSystem, TemporaryFs};
 use camino::Utf8Path;
 
 #[test]
@@ -63,10 +65,18 @@ fn formatting_differences() {
         let (fs, result) = run_cli(fs, &mut console, Args::from(args.as_slice()));
 
         assert_eq!(result.is_ok(), succeeds, "{args:?}: {result:?}");
-        assert_eq!(console.out_buffer.len(), 1);
         let message = &console.out_buffer[0];
         assert_eq!(message.level, LogLevel::Log);
         assert_eq!(markup_to_string(markup! {{message.content}}), output);
+        // Read-only `check` reports the formatter diff, like it does in file mode.
+        let expects_diff = command == "check" && !succeeds;
+        let printed_diff = console.out_buffer.iter().any(|message| {
+            message.level == LogLevel::Error
+                && markup_to_string(markup! {{message.content}})
+                    .contains("Formatter would have printed the following content")
+        });
+        assert_eq!(printed_diff, expects_diff, "{args:?}");
+        assert_eq!(console.out_buffer.len(), if expects_diff { 2 } else { 1 });
         assert_file_contents(
             &fs,
             Utf8Path::new("example.ts"),
@@ -335,4 +345,73 @@ fn skip_parse_errors_preserves_input() {
             }
         }
     }
+}
+
+#[test]
+fn check_reports_format_diff_without_write() {
+    let fs = MemoryFileSystem::default();
+    let mut console = BufferConsole::default();
+    let source = "export const value=1";
+    console.in_buffer.push(source.into());
+
+    let (fs, result) = run_cli(
+        fs,
+        &mut console,
+        Args::from(["check", "--stdin-file-path=example.ts"].as_slice()),
+    );
+
+    assert!(result.is_err(), "run_cli returned {result:?}");
+    let message = &console.out_buffer[0];
+    assert_eq!(message.level, LogLevel::Log);
+    assert_eq!(markup_to_string(markup! {{message.content}}), source);
+
+    assert_cli_snapshot(SnapshotPayload::new(
+        module_path!(),
+        "check_reports_format_diff_without_write",
+        fs,
+        console,
+        result,
+    ));
+}
+
+#[test]
+fn diagnostics_use_paths_relative_to_the_working_directory() {
+    let mut console = BufferConsole::default();
+    let mut fs = TemporaryFs::new("stdin_diagnostics_use_relative_paths");
+    fs.create_file(
+        "biome.json",
+        r#"{
+    "linter": {
+        "rules": {
+            "recommended": false,
+            "suspicious": { "noDebugger": "error" }
+        }
+    }
+}"#,
+    );
+    console
+        .in_buffer
+        .push("debugger;export const value=1".into());
+
+    let result = run_cli_with_dyn_fs(
+        Box::new(fs.create_os()),
+        &mut console,
+        Args::from(["check", "--stdin-file-path=src/example.ts"].as_slice()),
+    );
+
+    assert!(result.is_err(), "run_cli_with_dyn_fs returned {result:?}");
+    assert!(console.out_buffer.iter().any(|message| {
+        markup_to_string(markup! {{message.content}}).contains("src/example.ts:1:1")
+    }));
+    assert!(!console.out_buffer.iter().any(|message| {
+        markup_to_string(markup! {{message.content}}).contains(fs.working_directory.as_str())
+    }));
+
+    assert_cli_snapshot(SnapshotPayload::new(
+        module_path!(),
+        "diagnostics_use_paths_relative_to_the_working_directory",
+        fs.create_mem(),
+        console,
+        result,
+    ));
 }

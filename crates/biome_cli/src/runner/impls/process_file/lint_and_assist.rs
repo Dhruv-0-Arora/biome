@@ -1,7 +1,9 @@
 use crate::CliDiagnostic;
 use crate::diagnostics::StdinDiagnostic;
 use crate::runner::crawler::CrawlerContext;
-use crate::runner::diagnostics::{ResultExt, SkippedDiagnostic};
+use crate::runner::diagnostics::{
+    ContentDiffAdvice, FormatDiffDiagnostic, ResultExt, SkippedDiagnostic,
+};
 use crate::runner::execution::AnalyzerSelectors;
 use crate::runner::process_file::{
     FileStatus, Message, ProcessFile, ProcessStdinFilePayload, WorkspaceFile,
@@ -219,6 +221,32 @@ impl ProcessFile for LintAssistProcessFile {
             return Ok(());
         }
         print_stdin_diagnostics(console, cli_options, &display_path, source, result.diagnostics);
+
+        // In read-only mode the formatted content isn't printed to stdout, so the user
+        // needs to see how the content differs from the formatter output, like in file mode.
+        if !write
+            && execution.is_check()
+            && !result.format_with_errors_disabled
+            && let Some(formatted) = result.output.as_deref()
+            && formatted != content
+        {
+            let diagnostic = FormatDiffDiagnostic {
+                diff: ContentDiffAdvice {
+                    old: content.to_string(),
+                    new: formatted.to_string(),
+                },
+            }
+            .with_severity(Severity::Error)
+            .with_file_source_code(content)
+            .with_file_path(display_path);
+            if diagnostic.tags().is_verbose() {
+                if cli_options.verbose {
+                    console.error(markup! {{PrintDiagnostic::verbose(&diagnostic)}});
+                }
+            } else {
+                console.error(markup! {{PrintDiagnostic::simple(&diagnostic)}});
+            }
+        }
 
         let category = execution.as_diagnostic_category();
         if result.format_with_errors_disabled {
